@@ -2,23 +2,18 @@
 -- Trigger 1: Administrator (Before Insert)
 -- ===========================================================
 DROP TRIGGER IF EXISTS trg_administrator_before_insert;
-
 CREATE TRIGGER trg_administrator_before_insert
 BEFORE INSERT ON administrator
 FOR EACH ROW
 BEGIN
-    -- Purpose: To create a prefixed, auto-incrementing Admin_ID (e.g., ADM-000001)
     
     DECLARE next_id INT;
     
-    -- This is the robust way to get the next auto-increment value
-    -- without a race condition or table lock from SELECT MAX().
     SELECT AUTO_INCREMENT INTO next_id
     FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'administrator';
       
-    -- Set the new Admin_ID using this next value, *only if one isn't provided*.
     IF NEW.Admin_ID IS NULL THEN
         SET NEW.Admin_ID = CONCAT('ADM-', LPAD(next_id, 6, '0'));
     END IF;
@@ -29,7 +24,6 @@ END;
 -- Trigger 2: Post (After Insert)
 -- ===========================================================
 DROP TRIGGER IF EXISTS trg_post_after_insert;
-
 CREATE TRIGGER trg_post_after_insert
 AFTER INSERT ON post
 FOR EACH ROW
@@ -46,7 +40,6 @@ END;
 -- Trigger 3: Booking (After Insert)
 -- ===========================================================
 DROP TRIGGER IF EXISTS trg_booking_after_insert;
-
 CREATE TRIGGER trg_booking_after_insert
 AFTER INSERT ON booking
 FOR EACH ROW
@@ -82,7 +75,6 @@ BEGIN
 END;
 
 
-
 -- ===========================================================
 -- Trigger 5: Check Availability
 -- ===========================================================
@@ -102,7 +94,6 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Dates are not available.';
     END IF;
 END;
-
 
 -- ===========================================================
 -- Trigger 6: Delete Review_Count and Total_Review

@@ -2,40 +2,10 @@
 --  Part 1: Create Database and Tables
 -- ===========================================================
 
--- SET GLOBAL max_allowed_packet = 536870912;
--- SET GLOBAL net_read_timeout = 600;
--- SET GLOBAL net_write_timeout = 600;
--- SET GLOBAL wait_timeout = 600;
--- SET GLOBAL local_infile = 1;
+DROP DATABASE IF EXISTS updated_airbnb;
+CREATE DATABASE updated_airbnb CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_ci;
+USE updated_airbnb;
 
--- SELECT CURRENT_USER();
-
--- SHOW VARIABLES LIKE 'local_infile';
--- SHOW VARIABLES LIKE 'max_allowed_packet';
--- SHOW VARIABLES LIKE 'net_read_timeout';
-
-ALTER DATABASE airbnb 
-CHARACTER SET = utf8mb4 
-COLLATE = utf8mb4_0900_as_ci;
-
-SET FOREIGN_KEY_CHECKS = 0;
-
-DROP TABLE IF EXISTS administrator;
-DROP TABLE IF EXISTS user;
-DROP TABLE IF EXISTS guest;
-DROP TABLE IF EXISTS host;
-DROP TABLE IF EXISTS location;
-DROP TABLE IF EXISTS accommodation_type;
-DROP TABLE IF EXISTS accommodation_subtype;
-DROP TABLE IF EXISTS accommodation;
-DROP TABLE IF EXISTS post;
-DROP TABLE IF EXISTS contact;
-DROP TABLE IF EXISTS reviews;
-DROP TABLE IF EXISTS booking;
-DROP TABLE IF EXISTS payment;
-DROP TABLE IF EXISTS cancellation;
-
-SET FOREIGN_KEY_CHECKS = 1;
 -- ===========================================================
 --  Administrator Table
 -- ===========================================================
@@ -62,6 +32,7 @@ BEGIN
         SET NEW.Admin_ID = CONCAT('ADM-', LPAD((SELECT IFNULL(MAX(id_num),0)+1 FROM administrator), 6, '0'));
     END IF;
 END;
+
 
 -- Sample Data
 INSERT INTO administrator (Name, Password, BirthDate, Nationality, Email, PhoneNumber, ProfilePicture)
@@ -116,7 +87,7 @@ CREATE TABLE user (
 ) ENGINE=InnoDB;
 
 -- Load data from combined CSV
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/user.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/user.csv'
 INTO TABLE user
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -147,7 +118,7 @@ CREATE TABLE guest (
 ) ENGINE=InnoDB;
 
 -- Load guest-specific CSV
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/guest_extra.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/guest_extra.csv'
 INTO TABLE guest
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -179,7 +150,7 @@ CREATE TABLE host (
 ) ENGINE=InnoDB;
 
 -- Load host-specific CSV
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/host_extra.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/host_extra.csv'
 INTO TABLE host
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -212,7 +183,7 @@ CREATE TABLE location (
 -- ===========================================================
 --  Load data from CSV (skip header row)
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/location.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/location.csv'
 INTO TABLE location
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -249,7 +220,7 @@ CREATE TABLE accommodation_type (
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Load data from CSV
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/accommodationType.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodationType.csv'
 INTO TABLE accommodation_type
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -288,7 +259,7 @@ CREATE TABLE accommodation_subtype (
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Load data from CSV
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/accommodationSubtype.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodationSubtype.csv'
 INTO TABLE accommodation_subtype
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -337,7 +308,7 @@ CREATE TABLE accommodation (
 -- ===========================================================
 --  Load data from CSV (skip header row)
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/accommodation.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodation.csv'
 INTO TABLE accommodation
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -395,7 +366,7 @@ CREATE TABLE post (
 -- ===========================================================
 -- Load post data
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/post.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/post.csv'
 INTO TABLE post
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -429,7 +400,7 @@ CREATE TABLE contact (
 -- ===========================================================
 -- Load sampled CSV (Guest_ID, Host_ID only)
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/contact.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/contact.csv'
 INTO TABLE contact
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -447,7 +418,7 @@ IGNORE 1 ROWS
 DROP TABLE IF EXISTS reviews;
 
 CREATE TABLE reviews (
-    Review_ID          		VARCHAR(10)     NOT NULL,
+    Review_ID          		INT NOT NULL AUTO_INCREMENT,
     Guest_ID           		VARCHAR(10)     NOT NULL,
     Accommodation_ID   		VARCHAR(10)     NOT NULL,
     Review_Date        		DATE            NOT NULL,
@@ -473,14 +444,14 @@ CREATE TABLE reviews (
 -- ===========================================================
 -- Load CSV into Reviews
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/reviews.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/reviews.csv'
 INTO TABLE reviews
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (
-    Review_ID,
+    @Review_ID,
     Guest_ID,
     Accommodation_ID,
     @Review_Date,
@@ -496,7 +467,7 @@ SET
 DROP TABLE IF EXISTS booking;
 
 CREATE TABLE booking (
-    Booking_ID          VARCHAR(15)    NOT NULL,
+    Booking_ID          INT NOT NULL AUTO_INCREMENT,
     Accommodation_ID    VARCHAR(10)    NOT NULL,
     Guest_ID            VARCHAR(10)    NOT NULL,
     Check_in            DATE           NOT NULL,
@@ -524,14 +495,14 @@ CREATE TABLE booking (
 -- ===========================================================
 -- Load Booking CSV
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/booking.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/booking.csv'
 INTO TABLE booking
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 ROWS
 (
-    Booking_ID,
+    @Booking_ID,
     Accommodation_ID,
     Guest_ID,
     @Check_in,
@@ -554,14 +525,14 @@ SET
 DROP TABLE IF EXISTS payment;
 
 CREATE TABLE payment (
-    Payment_ID          VARCHAR(15)    NOT NULL,
-    Booking_ID          VARCHAR(15)    NOT NULL,
-    Guest_ID            VARCHAR(10)    NOT NULL,
-    Payment_Method      VARCHAR(20)    NOT NULL,
-    Amount              DECIMAL(10,2)  DEFAULT NULL,
-    Currency            VARCHAR(5)     NOT NULL DEFAULT 'USD',
-    Payment_Status      VARCHAR(20)    NOT NULL,
-    Paid_At             DATE           NOT NULL,
+    Payment_ID          INT 			NOT NULL AUTO_INCREMENT,
+    Booking_ID          INT    			NOT NULL,
+    Guest_ID            VARCHAR(10)    	NOT NULL,
+    Payment_Method      VARCHAR(20)    	NOT NULL,
+    Amount              DECIMAL(10,2)  	DEFAULT NULL,
+    Currency            VARCHAR(5)     	NOT NULL DEFAULT 'USD',
+    Payment_Status      VARCHAR(20)    	NOT NULL,
+    Paid_At             DATE           	NOT NULL,
 
     PRIMARY KEY (Payment_ID),
 
@@ -581,14 +552,14 @@ CREATE TABLE payment (
 -- ===========================================================
 -- Load Payment CSV
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/payment.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/payment.csv'
 INTO TABLE payment
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 ROWS
 (
-    Payment_ID,
+    @Payment_ID,
     Booking_ID,
     Guest_ID,
     Payment_Method,
@@ -609,7 +580,7 @@ DROP TABLE IF EXISTS cancellation;
 
 CREATE TABLE cancellation (
     Cancellation_ID     INT             NOT NULL AUTO_INCREMENT,
-    Booking_ID          VARCHAR(15)     NOT NULL,
+    Booking_ID          INT 		    NOT NULL,
     Cancel_Date         DATE            NOT NULL,
     Reason              VARCHAR(100),
     Refund_Rate         DECIMAL(4,2)    NOT NULL,
@@ -628,7 +599,7 @@ CREATE TABLE cancellation (
 -- ===========================================================
 -- Load Cancellation CSV
 -- ===========================================================
-LOAD DATA INFILE 'D:/MySqlServer/Uploads/cancellations.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/cancellations.csv'
 INTO TABLE cancellation
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
@@ -653,3 +624,12 @@ SET
     Reason = @Reason,
     Refund_Rate = NULLIF(@Refund_Rate,''),
     Refund_Amount = NULLIF(@Refund_Amount,'');
+
+
+
+
+
+
+
+
+
