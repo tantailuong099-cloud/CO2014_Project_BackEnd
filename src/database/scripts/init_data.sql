@@ -146,7 +146,7 @@ CREATE TABLE host (
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
-    CHECK (Response_Time IN ('within an hour', 'within a few hours', 'within a day', 'a few days or more'))
+    CHECK (Response_Time IN ('within an hour', 'within a few hours', 'within a day', 'a few days or more', 'unknown'))
 ) ENGINE=InnoDB;
 
 -- Load host-specific CSV

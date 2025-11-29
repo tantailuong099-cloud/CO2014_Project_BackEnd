@@ -17,10 +17,12 @@ import { AccommodationModule } from './accommodation/accommodation.module';
 // import { AccommodationTypeModule } from './accommodation-type/accommodation-type.module';
 // import { AccommodationSubtypeModule } from './accommodation-subtype/accommodation-subtype.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    AuthModule,
     UserModule,
     ReviewsModule,
     // PostModule,
