@@ -10,16 +10,19 @@ export class AccommodationService {
     private accommodationRepository: Repository<Accommodation>,
   ) {}
 
-  // 1. GET ALL (SEARCH + FILTER)
+  // --- 1. GET ALL (FULL FILTER) ---
   async findAll(keyword?: string, guests?: number, checkIn?: string, checkOut?: string) {
-    // Khởi tạo QueryBuilder
-    // 'acc' là alias cho bảng accommodation
     const query = this.accommodationRepository.createQueryBuilder('acc')
-      .leftJoinAndSelect('acc.location', 'loc') // Join bảng Location
-      .leftJoinAndSelect('acc.reviews', 'reviews') // Join bảng Reviews
-      .take(100); // Limit kết quả
+      .leftJoinAndSelect('acc.location', 'loc')
+      .leftJoinAndSelect('acc.reviews', 'reviews')
+      
+      // JOIN ĐỂ LẤY TYPE & SUBTYPE
+      .leftJoinAndSelect('acc.type', 'type')          // Lấy loại hình hiện tại
+      .leftJoinAndSelect('type.parent', 'parentType') // Lấy loại hình cha (nếu có)
+      
+      .take(100); // Giới hạn lấy 100 kết quả
 
-    // --- LOGIC 1: TÌM KIẾM KEYWORD (Title hoặc City) ---
+    // A. TÌM KIẾM KEYWORD
     if (keyword && keyword.trim() !== '') {
       query.andWhere(
         '(acc.Title LIKE :keyword OR loc.City LIKE :keyword)', 
@@ -27,22 +30,21 @@ export class AccommodationService {
       );
     }
 
-    // --- LOGIC 2: SỐ LƯỢNG KHÁCH ---
-    // Dựa vào cột Max_Guests trong entity bạn gửi
+    // B. LỌC SỐ LƯỢNG KHÁCH (Dùng cột Max_Guests từ entity)
     if (guests && guests > 1) {
       query.andWhere('acc.maxGuests >= :guests', { guests });
     }
 
-    // --- LOGIC 3: LỌC THEO NGÀY (Nâng cao) ---
-    // Logic: Tìm những phòng KHÔNG có booking nào trùng với khoảng ngày khách chọn
+    // C. LỌC NGÀY TRỐNG (CHECK-IN/CHECK-OUT)
+    // Logic: Loại bỏ những phòng có Booking trùng với khoảng ngày khách chọn
     if (checkIn && checkOut) {
-      // Lưu ý: Phần này yêu cầu bạn phải có Entity Booking chuẩn.
-      // Nếu chưa chạy được phần Date, bạn có thể comment đoạn này lại.
+      // *LƯU Ý*: Đảm bảo bạn đã có Entity Booking trong code
       query.andWhere(qb => {
         const subQuery = qb.subQuery()
           .select('booking.accommodationId')
           .from('Booking', 'booking') // Tên bảng Booking trong DB
           .where('booking.accommodationId = acc.accommodationId')
+          // Logic trùng lịch: (StartA < EndB) AND (EndA > StartB)
           .andWhere('(booking.checkIn < :checkOut AND booking.checkOut > :checkIn)')
           .getQuery();
         return `NOT EXISTS ${subQuery}`;
@@ -53,13 +55,14 @@ export class AccommodationService {
     return items.map((item) => this.mapAccommodationData(item));
   }
 
-  // 2. GET DETAIL (Giữ nguyên logic cũ của bạn)
+  // --- 2. GET DETAIL ---
   async findOne(id: string) {
     const item = await this.accommodationRepository.findOne({
       where: { accommodationId: id },
       relations: [
         'location',
         'type',
+        'type.parent', // Lấy thêm parent để hiện đúng subtype chi tiết
         'reviews',
         'reviews.guest',
         'reviews.guest.user',
@@ -77,7 +80,7 @@ export class AccommodationService {
     return this.mapAccommodationData(item);
   }
 
-  // --- MAP DATA HELPER ---
+  // --- 3. HÀM MAP DỮ LIỆU ---
   private mapAccommodationData(item: Accommodation) {
     // Tính Rating
     let avgRating: string | number = 'New';
@@ -86,11 +89,11 @@ export class AccommodationService {
       avgRating = (total / item.reviews.length).toFixed(1);
     }
 
-    // Lấy Host info
+    // Lấy Host
     const post = item.posts && item.posts.length > 0 ? item.posts[0] : null;
     const hostUser = post?.host?.user;
 
-    // Xử lý Amenities
+    // Amenities
     let amenitiesArray: string[] = []; 
     try {
       if (item.Amenities) {
@@ -101,12 +104,22 @@ export class AccommodationService {
       amenitiesArray = item.Amenities ? item.Amenities.split(',') : [];
     }
 
+    // LOGIC TYPE & SUBTYPE
+    // Nếu type hiện tại có parent -> Parent là Loại chính (vd: Nhà), Type hiện tại là Loại phụ (vd: Nhà trên cây)
+    // Nếu không có parent -> Type hiện tại là Loại chính
+    const mainType = item.type?.parent ? item.type.parent.typeName : (item.type?.typeName || 'Nhà ở');
+    const subType = item.type?.parent ? item.type.typeName : '';
+
     return {
       ...item,
       rating: avgRating,
       reviewCount: item.totalReviews,
-      image: '/image/ACC_001.jpg', // Placeholder image
+      image: '/image/ACC_001.jpg', // Ảnh mặc định
       amenitiesArray: amenitiesArray,
+      
+      // Type trả về frontend
+      typeName: mainType, 
+      subTypeName: subType, 
 
       hostData: {
         name: hostUser?.Name || 'Chủ nhà',

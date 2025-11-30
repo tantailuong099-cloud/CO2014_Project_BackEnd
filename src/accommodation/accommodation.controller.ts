@@ -12,7 +12,7 @@ export class AccommodationController {
     @Query('checkIn') checkIn?: string,
     @Query('checkOut') checkOut?: string,
   ) {
-    // Chuyển đổi guests sang number (mặc định là 1 nếu không có)
+    // Chuyển đổi guests từ string sang number (mặc định là 1)
     const guestCount = guests ? parseInt(guests, 10) : 1;
     
     return this.accommodationService.findAll(search, guestCount, checkIn, checkOut);
