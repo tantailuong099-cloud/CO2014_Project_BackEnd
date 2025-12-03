@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccommodationService } from './accommodation.service';
 import { AccommodationController } from './accommodation.controller';
-import { DatabaseModule } from 'src/database/database.module';
+import { Accommodation } from 'src/database/entities/accommodation.entity'; // Import Entity
 
 @Module({
-  imports: [DatabaseModule],
-  providers: [AccommodationService],
+  imports: [TypeOrmModule.forFeature([Accommodation])], // <--- DÒNG QUAN TRỌNG NHẤT
   controllers: [AccommodationController],
+  providers: [AccommodationService],
+  exports: [AccommodationService],
 })
 export class AccommodationModule {}
