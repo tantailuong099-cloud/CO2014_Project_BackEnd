@@ -62,7 +62,7 @@ export class DatabaseModule implements OnModuleInit {
   constructor(private installer: DatabaseInstallService) {}
 
   async onModuleInit() {
-    await this.installer.runSQLFile('init_data.sql');
+    // await this.installer.runSQLFile('init_data.sql');
     await this.installer.runSQLFile('procedures.sql');
     await this.installer.runSQLFile('functions.sql');
     await this.installer.runSQLFile('triggers.sql');

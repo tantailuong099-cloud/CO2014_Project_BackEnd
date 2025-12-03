@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Accommodation } from '../database/entities/accommodation.entity';
+import { Injectable } from '@nestjs/common';
+import { DatabaseService } from 'src/database/database.service';
+import { CreateListingDto } from './dto/create-listing.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
+import { SearchAccommodationDto } from './dto/search-accommodation.dto';
 
 @Injectable()
 export class AccommodationService {
