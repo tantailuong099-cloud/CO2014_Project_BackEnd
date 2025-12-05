@@ -1,3 +1,5 @@
+// CO2014_Project_BackEnd\src\database\database.module.ts
+
 import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseService } from './database.service';

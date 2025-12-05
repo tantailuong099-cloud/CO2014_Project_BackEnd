@@ -7,7 +7,9 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-    })
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
   // CORS (Cho phép Frontend gọi vào)
   app.enableCors();
