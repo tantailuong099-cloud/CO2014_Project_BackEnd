@@ -1,3 +1,5 @@
+-- CO2014_Project_BackEnd\src\database\scripts\functions.sql
+
 -- ===========================================================
 -- Function 1: Calculate Annual Revenue ( for the previous year (2024))
 -- ===========================================================

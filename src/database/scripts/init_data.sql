@@ -87,7 +87,7 @@ CREATE TABLE user (
 ) ENGINE=InnoDB;
 
 -- Load data from combined CSV
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/user.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/user.csv'
 INTO TABLE user
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -118,7 +118,7 @@ CREATE TABLE guest (
 ) ENGINE=InnoDB;
 
 -- Load guest-specific CSV
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/guest_extra.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/guest_extra.csv'
 INTO TABLE guest
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -150,7 +150,7 @@ CREATE TABLE host (
 ) ENGINE=InnoDB;
 
 -- Load host-specific CSV
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/host_extra.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/host_extra.csv'
 INTO TABLE host
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -183,7 +183,7 @@ CREATE TABLE location (
 -- ===========================================================
 --  Load data from CSV (skip header row)
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/location.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/location.csv'
 INTO TABLE location
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -220,7 +220,7 @@ CREATE TABLE accommodation_type (
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Load data from CSV
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodationType.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/accommodationType.csv'
 INTO TABLE accommodation_type
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -259,7 +259,7 @@ CREATE TABLE accommodation_subtype (
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Load data from CSV
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodationSubtype.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/accommodationSubtype.csv'
 INTO TABLE accommodation_subtype
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -308,7 +308,7 @@ CREATE TABLE accommodation (
 -- ===========================================================
 --  Load data from CSV (skip header row)
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/accommodation.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/accommodation.csv'
 INTO TABLE accommodation
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -366,7 +366,7 @@ CREATE TABLE post (
 -- ===========================================================
 -- Load post data
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/post.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/post.csv'
 INTO TABLE post
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"' 
@@ -400,7 +400,7 @@ CREATE TABLE contact (
 -- ===========================================================
 -- Load sampled CSV (Guest_ID, Host_ID only)
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/contact.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/contact.csv'
 INTO TABLE contact
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -444,7 +444,7 @@ CREATE TABLE reviews (
 -- ===========================================================
 -- Load CSV into Reviews
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/reviews.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/reviews.csv'
 INTO TABLE reviews
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
@@ -495,7 +495,7 @@ CREATE TABLE booking (
 -- ===========================================================
 -- Load Booking CSV
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/booking.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/booking.csv'
 INTO TABLE booking
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
@@ -552,7 +552,7 @@ CREATE TABLE payment (
 -- ===========================================================
 -- Load Payment CSV
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/payment.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/payment.csv'
 INTO TABLE payment
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
@@ -599,7 +599,7 @@ CREATE TABLE cancellation (
 -- ===========================================================
 -- Load Cancellation CSV
 -- ===========================================================
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.5/Uploads/cancellations.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/cancellations.csv'
 INTO TABLE cancellation
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'

@@ -1,3 +1,5 @@
+-- CO2014_Project_BackEnd\src\database\scripts\triggers.sql
+
 -- ===========================================================
 -- Trigger 1: Administrator (Before Insert)
 -- ===========================================================
