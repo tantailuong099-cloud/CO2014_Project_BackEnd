@@ -1,4 +1,4 @@
-// CO2014_Project_BackEnd\src\booking\dto\confirm-booking.dto.ts
+// CO2014_Project_BackEnd\src\booking\dto\complete-payment.dto.ts
 
 import { IsString, IsNumber } from 'class-validator';
 
