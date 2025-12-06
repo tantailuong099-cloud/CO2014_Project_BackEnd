@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Post, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
+import { UpdateUserProfileDto } from './dto/update-user.dto';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -23,8 +24,14 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getProfile(@Req() req) {
+  async getProfile(@Request() req) {
     const userId = req.user.userId;
     return this.userService.getProfile(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('profile')
+  updateProfile(@Request() req, @Body() dto: UpdateUserProfileDto) {
+    return this.userService.updateProfile(req.user.userId, dto);
   }
 }
