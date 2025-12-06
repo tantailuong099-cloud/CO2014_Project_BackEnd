@@ -1,29 +1,56 @@
-import { Controller } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AdministratorService } from './administrator.service';
+import { GetUsersDto } from './dto/get-users.dto';
+import { CreateAdminUserDto } from './dto/create-user.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
-@Controller('administrator')
+@Controller('admin')
+@UseGuards(JwtAuthGuard)
 export class AdministratorController {
-  constructor(private readonly administratorService: AdministratorService) {}
+  constructor(private readonly adminService: AdministratorService) {}
 
-  // // API: POST /admin/sync-data
-  // // Mục đích: Chạy lại toàn bộ số đếm (Maintenance)
-  // @Post('sync-data')
-  // syncData() {
-  //   return this.adminService.syncData();
-  // }
+  @Get('users')
+  getUsers(@Query() query: GetUsersDto, @Request() req) {
+    const currentAdminId = req.user.userId;
+    return this.adminService.findAll(query, currentAdminId);
+  }
 
-  // // API: GET /admin/users
-  // // Mục đích: Lấy danh sách user để quản lý
-  // @Get('users')
-  // findAllUsers() {
-  //   return this.adminService.findAllUsers();
-  // }
+  @Post('users')
+  createUser(@Body() dto: CreateAdminUserDto, @Request() req) {
+    const currentAdminId = req.user.userId;
+    return this.adminService.createUser(dto, currentAdminId);
+  }
 
-  // // API: DELETE /admin/users/:id
-  // // Mục đích: Xóa/Ban user
-  // @Delete('users/:id')
-  // deleteUser(@Param('id') userId: string) {
-  //   return this.adminService.deleteUser(userId);
-  // }
-  
+  @Get('users/:id')
+  getUserDetail(@Param('id') id: string, @Request() req) {
+    const currentAdminId = req.user.userId;
+    return this.adminService.findOne(id, currentAdminId);
+  }
+
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string, @Request() req) {
+    const currentAdminId = req.user.userId;
+    return this.adminService.deleteUser(id, currentAdminId);
+  }
+
+  @Get('stats')
+  getStats(@Request() req) {
+    const currentAdminId = req.user.userId;
+    return this.adminService.getStats(currentAdminId);
+  }
+
+  @Post('sync')
+  syncData() {
+    return this.adminService.syncSystemData();
+  }
 }

@@ -18,34 +18,36 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  private async generateUserId(role: string): Promise<string> {
-    let prefix = '';
+  // private async generateUserId(role: string): Promise<string> {
+  //   let prefix = '';
 
-    if (role === 'HOST') prefix = 'HST-';
-    else if (role === 'GUEST') prefix = 'GST-';
-    else throw new BadRequestException('Role không hợp lệ');
+  //   const roleUpper = role.toUpperCase();
 
-    const sql = `
-      SELECT User_ID 
-      FROM user 
-      WHERE User_ID LIKE '${prefix}%'
-      ORDER BY CAST(SUBSTRING(User_ID, 5) AS UNSIGNED) DESC
-      LIMIT 1
-    `;
+  //   if (roleUpper === 'HOST') prefix = 'HST-';
+  //   else if (roleUpper === 'GUEST') prefix = 'GST-';
+  //   else throw new BadRequestException('Role không hợp lệ');
 
-    const result = await this.db.query(sql);
+  //   const sql = `
+  //     SELECT User_ID
+  //     FROM user
+  //     WHERE User_ID LIKE '${prefix}%'
+  //     ORDER BY CAST(SUBSTRING(User_ID, 5) AS UNSIGNED) DESC
+  //     LIMIT 1
+  //   `;
 
-    let nextNumber = 1;
-    if (result.length > 0) {
-      const currentId = result[0].User_ID;
-      const currentNumber = parseInt(currentId.substring(4));
-      nextNumber = currentNumber + 1;
-    }
+  //   const result = await this.db.query(sql);
 
-    const nextId = prefix + nextNumber.toString().padStart(6, '0');
+  //   let nextNumber = 1;
+  //   if (result.length > 0) {
+  //     const currentId = result[0].User_ID;
+  //     const currentNumber = parseInt(currentId.substring(4));
+  //     nextNumber = currentNumber + 1;
+  //   }
 
-    return nextId;
-  }
+  //   const nextId = prefix + nextNumber.toString().padStart(6, '0');
+
+  //   return nextId;
+  // }
 
   async register(dto: RegisterDto) {
     const existingUser = await this.userService.findByEmail(dto.email);
@@ -57,12 +59,17 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.password, salt);
 
     // gọi hàm tạo prefix user_id
-    const userId = await this.generateUserId(dto.role);
+    const userId = await this.userService.generateUserId(dto.role);
+
+    const sqlFindAdmin = `SELECT Admin_ID FROM administrator ORDER BY RAND() LIMIT 1`;
+    const adminResult = await this.db.query(sqlFindAdmin);
+    const assignedAdminId =
+      adminResult.length > 0 ? adminResult[0].Admin_ID : null;
 
     const sqlUser = `
       INSERT INTO user (
-        User_ID, Name, BirthDate, Nationality, Email, Password, PhoneNumber, SSN, Bank_Account
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        User_ID, Name, BirthDate, Nationality, Email, Password, PhoneNumber, SSN, Bank_Account, Admin_ID
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     // Dùng Transaction để đảm bảo an toàn (nếu insert Guest lỗi thì rollback User)
@@ -80,6 +87,7 @@ export class AuthService {
         dto.phoneNumber || null,
         dto.ssn || null,
         dto.bankAccount || null,
+        assignedAdminId,
       ]);
 
       if (dto.role === 'HOST') {
@@ -110,33 +118,71 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.userService.findByEmail(dto.email);
-    if (!user) {
-      throw new UnauthorizedException('Sai email hoặc mật khẩu');
-    }
+    if (user) {
+      const isMatch = await bcrypt.compare(dto.password, user.Password);
+      if (!isMatch) {
+        throw new UnauthorizedException('Sai email hoặc mật khẩu');
+      }
 
-    const isMatch = await bcrypt.compare(dto.password, user.Password);
-    if (!isMatch) {
-      throw new UnauthorizedException('Sai email hoặc mật khẩu');
-    }
+      const role = await this.userService.getUserRole(user.User_ID);
 
-    const role = await this.userService.getUserRole(user.User_ID);
-
-    const payload = {
-      sub: user.User_ID,
-      email: user.Email,
-      role: role,
-      name: user.Name,
-    };
-    const access_token = await this.jwtService.signAsync(payload);
-
-    return {
-      access_token,
-      user: {
-        id: user.User_ID,
-        name: user.Name,
+      const payload = {
+        sub: user.User_ID,
         email: user.Email,
         role: role,
-      },
-    };
+        name: user.Name,
+      };
+      const access_token = await this.jwtService.signAsync(payload);
+
+      return {
+        access_token,
+        user: {
+          id: user.User_ID,
+          name: user.Name,
+          email: user.Email,
+          role: role,
+        },
+      };
+    }
+
+    const admins = await this.db.query(
+      'SELECT * FROM administrator WHERE Email = ?',
+      [dto.email]
+    );
+
+    if (admins.length > 0) {
+      const admin = admins[0];
+
+      // ⚠️ QUAN TRỌNG: Dữ liệu mẫu Admin của bạn là password thường (alice123)
+      // Nên ta so sánh trực tiếp string (chỉ dành cho Admin trong bài tập này)
+      if (admin.Password !== dto.password) {
+        throw new UnauthorizedException('Sai mật khẩu Admin');
+      }
+
+      // Tạo Token cho Admin (Role cứng là 'Admin')
+      const payload = {
+        sub: admin.Admin_ID,
+        email: admin.Email,
+        role: 'ADMIN',
+        name: admin.Name,
+      };
+      const access_token = await this.jwtService.signAsync(payload);
+
+      return {
+        access_token,
+        user: {
+          id: admin.Admin_ID,
+          name: admin.Name,
+          email: admin.Email,
+          role: 'ADMIN',
+        },
+      };
+    }
+
+    throw new UnauthorizedException('Email không tồn tại trong hệ thống');
+  }
+
+  async logout() {
+    return { message: 'Đăng xuất thành công' };
   }
 }
