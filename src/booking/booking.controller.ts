@@ -77,6 +77,15 @@ export class BookingController {
   }
 
   // -------------------------------------------------------
+  // Host All Bookings
+  // GET /booking/host/:hostId/all
+  // -------------------------------------------------------
+  @Get('host/:hostId/all')
+  async getHostAllBookings(@Param('hostId') hostId: string) {
+    return this.bookingService.getHostAllBookings(hostId);
+  }
+
+  // -------------------------------------------------------
   // 7. Booking Detail
   // GET /booking/:id
   // -------------------------------------------------------

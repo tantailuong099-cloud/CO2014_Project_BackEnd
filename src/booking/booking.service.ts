@@ -151,6 +151,25 @@ export class BookingService {
   }
 
   // -------------------------------------------------------
+  // Host All Bookings (Pending + WaitingPayment + Confirmed + Completed + Cancelled)
+  // -------------------------------------------------------
+  async getHostAllBookings(hostId: string) {
+    return this.db.query(
+      `
+        SELECT b.*
+        FROM booking b
+        JOIN accommodation a 
+            ON a.Accommodation_ID = b.Accommodation_ID
+        JOIN post p 
+            ON p.Accommodation_ID = a.Accommodation_ID
+        WHERE p.Host_ID = ?
+        ORDER BY b.Created_At DESC
+      `,
+      [hostId],
+    );
+  }
+
+  // -------------------------------------------------------
   // 6. Booking Detail
   // -------------------------------------------------------
   async getDetail(bookingId: number) {
