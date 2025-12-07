@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -14,38 +15,72 @@ export class ReviewsService {
   // ======================================================
   // 1. CREATE REVIEW
   // ======================================================
-  async create(createReviewDto: CreateReviewDto) {
-    const { guestId, accommodationId, comment, rating } = createReviewDto;
+  async create(guestId: string, dto: CreateReviewDto) {
+    // 1. CHECK QUYỀN: Guest này có booking nào "Completed" tại nhà này chưa?
+    // Nếu chưa ở xong thì không được review.
+    const checkSql = `
+      SELECT Booking_ID 
+      FROM booking 
+      WHERE Guest_ID = ? 
+        AND Accommodation_ID = ? 
+        AND Status = 'Completed'
+      LIMIT 1
+    `;
 
-    // Logic nghiệp vụ thực tế: Nên kiểm tra xem Guest đã từng Book phòng này chưa và đã Check-out chưa.
-    // Tuy nhiên ở mức độ CRUD cơ bản, ta chỉ insert.
+    const bookings = await this.databaseService.query(checkSql, [
+      guestId,
+      dto.accommodationId,
+    ]);
 
-    const sql = `
-      INSERT INTO reviews (guestId, accommodationId, Review_Date, comment, rating)
-      VALUES (?, ?, CURRENT_DATE(), ?, ?);
+    if (bookings.length === 0) {
+      throw new ForbiddenException(
+        'Bạn chỉ có thể đánh giá sau khi đã hoàn thành chuyến đi tại đây.'
+      );
+    }
+
+    // 2. CHECK TRÙNG: (Optional) Mỗi booking chỉ được 1 review?
+    // Hoặc mỗi Guest chỉ review nhà đó 1 lần?
+    // Ở đây mình cho phép review thoải mái, trigger sẽ tự cộng dồn.
+
+    // 3. INSERT REVIEW
+    const insertSql = `
+      INSERT INTO reviews (Guest_ID, Accommodation_ID, Review_Date, Comments, Ratings)
+      VALUES (?, ?, CURDATE(), ?, ?)
     `;
 
     try {
-      const result = await this.databaseService.query(sql, [
+      await this.databaseService.query(insertSql, [
         guestId,
-        accommodationId,
-        comment || null,
-        rating,
+        dto.accommodationId,
+        dto.comment,
+        dto.rating,
       ]);
 
-      return {
-        Review_ID: result.insertId,
-        message: 'Review posted successfully',
-      };
+      return { message: 'Đánh giá thành công!' };
     } catch (error) {
-      // Bắt lỗi nếu guestId hoặc accommodationId không tồn tại
-      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-        throw new BadRequestException(
-          'Guest ID or Accommodation ID does not exist.',
-        );
-      }
-      throw new BadRequestException(error.message);
+      throw new BadRequestException('Lỗi khi lưu đánh giá: ' + error.message);
     }
+  }
+
+  // ======================================================
+  // GET REVIEWS BY ACCOMMODATION (Để hiện ở trang chi tiết)
+  // ======================================================
+  async findByAccommodation(accId: string) {
+    const sql = `
+      SELECT 
+        r.Review_ID as id,
+        r.Ratings as rating,
+        r.Comments as comment,
+        r.Review_Date as date,
+        u.Name as guestName,
+        -- Giả lập avatar nếu DB không có
+        CONCAT('https://i.pravatar.cc/150?u=', r.Guest_ID) as avatar
+      FROM reviews r
+      JOIN user u ON r.Guest_ID = u.User_ID
+      WHERE r.Accommodation_ID = ?
+      ORDER BY r.Review_Date DESC
+    `;
+    return this.databaseService.query(sql, [accId]);
   }
 
   // ======================================================
@@ -69,18 +104,18 @@ export class ReviewsService {
   // ======================================================
   // 3. FIND BY ACCOMMODATION (Quan trọng: Xem đánh giá của 1 phòng)
   // ======================================================
-  async findByAccommodation(accId: string) {
-    const sql = `
-      SELECT 
-        r.Review_ID, r.rating, r.comment, r.Review_Date,
-        u.Name AS Guest_Name, u.ProfilePicture
-      FROM reviews r
-      JOIN user u ON r.guestId = u.User_ID
-      WHERE r.accommodationId = ?
-      ORDER BY r.Review_Date DESC;
-    `;
-    return await this.databaseService.query(sql, [accId]);
-  }
+  // async findByAccommodation(accId: string) {
+  //   const sql = `
+  //     SELECT
+  //       r.Review_ID, r.rating, r.comment, r.Review_Date,
+  //       u.Name AS Guest_Name, u.ProfilePicture
+  //     FROM reviews r
+  //     JOIN user u ON r.guestId = u.User_ID
+  //     WHERE r.accommodationId = ?
+  //     ORDER BY r.Review_Date DESC;
+  //   `;
+  //   return await this.databaseService.query(sql, [accId]);
+  // }
 
   // ======================================================
   // 4. FIND ONE

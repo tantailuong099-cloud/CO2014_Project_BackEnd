@@ -159,7 +159,6 @@ export class AdministratorService {
          WHERE u.Admin_ID = ?) as totalBookings
     `;
 
-    // Truyền adminId vào 3 vị trí dấu ?
     const result = await this.db.query(sql, [adminId, adminId, adminId]);
     return result[0];
   }
@@ -168,5 +167,81 @@ export class AdministratorService {
     await this.db.query(`CALL sp_SyncSystemData('ALL', @msg)`);
     const result = await this.db.query(`SELECT @msg as message`);
     return result[0];
+  }
+  async findContacts(adminId: string, page: number = 1, limit: number = 50) {
+    const offset = (page - 1) * limit;
+
+    // 1. Query Lấy Dữ liệu (Dùng UNION để tận dụng Index)
+    const sqlData = `
+      (SELECT 
+        c.Contact_ID,
+        c.Guest_ID, u_g.Name as GuestName, u_g.Email as GuestEmail,
+        c.Host_ID, u_h.Name as HostName, u_h.Email as HostEmail
+      FROM contact c
+      JOIN user u_g ON c.Guest_ID = u_g.User_ID
+      JOIN user u_h ON c.Host_ID = u_h.User_ID
+      WHERE u_g.Admin_ID = ?)  -- Vế 1: Admin quản lý Guest
+      
+      UNION DISTINCT  -- Gộp và loại bỏ trùng lặp (nếu Admin quản lý cả 2)
+      
+      (SELECT 
+        c.Contact_ID,
+        c.Guest_ID, u_g.Name as GuestName, u_g.Email as GuestEmail,
+        c.Host_ID, u_h.Name as HostName, u_h.Email as HostEmail
+      FROM contact c
+      JOIN user u_g ON c.Guest_ID = u_g.User_ID
+      JOIN user u_h ON c.Host_ID = u_h.User_ID
+      WHERE u_h.Admin_ID = ?) -- Vế 2: Admin quản lý Host
+
+      ORDER BY Contact_ID DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    // 2. Query Đếm tổng (Phải dùng UNION tương tự để số trang chính xác)
+    const sqlCount = `
+      SELECT COUNT(*) as total FROM (
+        (SELECT c.Contact_ID
+         FROM contact c
+         JOIN user u_g ON c.Guest_ID = u_g.User_ID
+         WHERE u_g.Admin_ID = ?)
+         
+        UNION DISTINCT
+        
+        (SELECT c.Contact_ID
+         FROM contact c
+         JOIN user u_h ON c.Host_ID = u_h.User_ID
+         WHERE u_h.Admin_ID = ?)
+      ) as combined_result
+    `;
+
+    try {
+      const [data, countRes] = await Promise.all([
+        // Truyền tham số: [adminId (vế 1), adminId (vế 2), limit, offset]
+        this.db.query(sqlData, [
+          adminId,
+          adminId,
+          Number(limit),
+          Number(offset),
+        ]),
+        // Truyền tham số đếm: [adminId (vế 1), adminId (vế 2)]
+        this.db.query(sqlCount, [adminId, adminId]),
+      ]);
+
+      const totalItems = countRes[0]?.total || 0;
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        data,
+        meta: {
+          totalItems: Number(totalItems),
+          totalPages,
+          currentPage: Number(page),
+          itemsPerPage: Number(limit),
+        },
+      };
+    } catch (error) {
+      console.error('Lỗi SQL Contacts:', error);
+      throw new Error('Lỗi lấy danh sách contact: ' + error.message);
+    }
   }
 }

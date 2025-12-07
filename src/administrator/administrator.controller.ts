@@ -53,4 +53,18 @@ export class AdministratorController {
   syncData() {
     return this.adminService.syncSystemData();
   }
+
+  @Get('contacts')
+  getContacts(
+    @Request() req,
+    @Query('page') page: string,
+    @Query('limit') limit: string
+  ) {
+    const adminId = req.user.userId;
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 10;
+
+    return this.adminService.findContacts(adminId, pageNum, limitNum);
+  }
+  
 }

@@ -151,6 +151,25 @@ export class BookingService {
   }
 
   // -------------------------------------------------------
+  // Host All Bookings (Pending + WaitingPayment + Confirmed + Completed + Cancelled)
+  // -------------------------------------------------------
+  async getHostAllBookings(hostId: string) {
+    return this.db.query(
+      `
+        SELECT b.*
+        FROM booking b
+        JOIN accommodation a 
+            ON a.Accommodation_ID = b.Accommodation_ID
+        JOIN post p 
+            ON p.Accommodation_ID = a.Accommodation_ID
+        WHERE p.Host_ID = ?
+        ORDER BY b.Created_At DESC
+      `,
+      [hostId],
+    );
+  }
+
+  // -------------------------------------------------------
   // 6. Booking Detail
   // -------------------------------------------------------
   async getDetail(bookingId: number) {
@@ -188,4 +207,28 @@ export class BookingService {
       throw new BadRequestException("Host approval failed");
     }
   }
+
+  async findByGuest(guestId: string) {
+    const sql = `
+      SELECT 
+        b.Booking_ID, 
+        b.Status, 
+        b.Total_Price, 
+        b.Check_in, 
+        b.Check_out, 
+        
+        -- 👇 QUAN TRỌNG: Phải SELECT dòng này thì Frontend mới có cái gửi đi Review
+        b.Accommodation_ID, 
+        
+        a.Title as Accommodation_Title,
+        -- Giả lập ảnh cover để hiện ở list booking
+        '/image/ACC_001.jpg' as Image
+      FROM booking b
+      JOIN accommodation a ON b.Accommodation_ID = a.Accommodation_ID
+      WHERE b.Guest_ID = ?
+      ORDER BY b.Created_At DESC
+    `;
+    return this.db.query(sql, [guestId]);
+  }
+  
 }

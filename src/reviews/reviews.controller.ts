@@ -8,10 +8,13 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -31,9 +34,10 @@ export class ReviewsController {
   //   return this.reviewsService.remove(id);
   // }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createReviewDto: CreateReviewDto) {
-    return this.reviewsService.create(createReviewDto);
+  create(@Body() dto: CreateReviewDto, @Request() req) {
+    return this.reviewsService.create(req.user.userId, dto);
   }
 
   @Get()

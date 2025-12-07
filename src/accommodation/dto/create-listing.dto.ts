@@ -24,26 +24,38 @@ import {
   IsNumber,
   IsArray,
   IsOptional,
+  MinLength,
+  Min,
 } from 'class-validator';
 
 export class CreateListingDto {
-  @IsNotEmpty() @IsString() title: string;
-  @IsNotEmpty() @IsString() description: string;
+  @IsNotEmpty({ message: 'Tiêu đề không được để trống' })
+  @IsString()
+  @MinLength(10, { message: 'Tiêu đề phải dài ít nhất 10 ký tự' })
+  title: string;
+  @IsNotEmpty({ message: 'Mô tả không được để trống' })
+  @IsString()
+  description: string;
 
-  @IsNotEmpty() @IsString() city: string; // Chỉ lưu: "Vung Tau", "Hanoi"...
+  @IsNotEmpty({ message: 'Vui lòng chọn thành phố' }) @IsString() city: string; // Chỉ lưu: "Vung Tau", "Hanoi"...
 
-  @IsNotEmpty() @IsString() typeId: string; // <--- MỚI: Nhận 'A01', 'B02'...
+  @IsNotEmpty({ message: 'Vui lòng chọn loại nhà' }) @IsString() typeId: string; // <--- MỚI: Nhận 'A01', 'B02'...
 
-  @IsNotEmpty() pricePerNight: number | string;
-  @IsNotEmpty() maxGuests: number | string;
+  @IsNotEmpty()
+  @Min(100, { message: 'Giá phòng tối thiểu là 100đ' })
+  pricePerNight: number | string;
+
+  @IsNotEmpty()
+  @Min(1, { message: 'Số khách tối thiểu là 1' })
+  maxGuests: number | string;
 
   @IsArray() amenities: string[];
-  @IsOptional() 
+  @IsOptional()
   numBeds?: number | string;
 
-  @IsOptional() 
+  @IsOptional()
   numBedrooms?: number | string;
 
-  @IsOptional() 
+  @IsOptional()
   numBathrooms?: number | string;
 }
