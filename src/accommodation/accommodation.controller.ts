@@ -1,3 +1,7 @@
+import { AccommodationService } from './accommodation.service';
+import { CreateListingDto } from './dto/create-listing.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
+import { SearchAccommodationDto } from './dto/search-accommodation.dto';
 import {
   Controller,
   Get,
@@ -6,12 +10,11 @@ import {
   Delete,
   Body,
   Param,
+  UseGuards,
+  Request,
   Query,
 } from '@nestjs/common';
-import { AccommodationService } from './accommodation.service';
-import { CreateListingDto } from './dto/create-listing.dto';
-import { UpdateListingDto } from './dto/update-listing.dto';
-import { SearchAccommodationDto } from './dto/search-accommodation.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
 @Controller('accommodation')
 export class AccommodationController {
@@ -66,6 +69,30 @@ export class AccommodationController {
   //   return this.accService.remove(id);
   // }
 
+
+  @Get('types')
+  getTypes() {
+    return this.accommodationService.getAccommodationTypes();
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get('host/my-listings')
+  getMyListings(@Request() req) {
+    return this.accommodationService.getHostListings(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  create(@Body() dto: CreateListingDto, @Request() req) {
+    return this.accommodationService.createListing(req.user.userId, dto);
+  }
+
+  // Lấy chi tiết để Edit (Check quyền Host)
+  @UseGuards(JwtAuthGuard)
+  @Get('host/edit/:id')
+  findOneForEdit(@Param('id') id: string, @Request() req) {
+    return this.accommodationService.findOneForEdit(id, req.user.userId);
+  }
+
   @Get()
   findAll(
     @Query('search') search?: string,
@@ -83,9 +110,25 @@ export class AccommodationController {
       checkOut
     );
   }
-
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.accommodationService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put(':id')
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateListingDto,
+    @Request() req
+  ) {
+    return this.accommodationService.updateListing(id, req.user.userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req) {
+    return this.accommodationService.deleteListing(id, req.user.userId);
   }
 }

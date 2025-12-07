@@ -34,7 +34,7 @@ export class HostService {
     const sql = `
       SELECT 
         h.Host_ID, h.Tax_ID, h.Response_Time, h.Acceptance_Rate, h.Is_Superhost, h.Listings_Count,
-        u.Name, u.Email, u.PhoneNumber, u.ProfilePicture
+        u.Name, u.Email, u.PhoneNumber
       FROM host h
       JOIN user u ON h.Host_ID = u.User_ID
       WHERE h.Host_ID = ?;
@@ -64,7 +64,7 @@ export class HostService {
 
     if (userExists.length === 0) {
       throw new NotFoundException(
-        `User ID ${Host_ID} does not exist. Cannot create host.`,
+        `User ID ${Host_ID} does not exist. Cannot create host.`
       );
     }
 
@@ -143,7 +143,7 @@ export class HostService {
       return this.findOne(id);
     } catch (error) {
       throw new BadRequestException(
-        'Could not update host details: ' + error.message,
+        'Could not update host details: ' + error.message
       );
     }
   }
@@ -178,5 +178,36 @@ export class HostService {
       ORDER BY h.Acceptance_Rate DESC;
     `;
     return await this.databaseService.query(sql);
+  }
+
+  async getDashboardStats(hostId: string) {
+    // 1. Tổng số nhà: Dùng hàm fn_count_accommodations_by_host
+    const totalListings = await this.databaseService.callFunction(
+      'fn_count_accommodations_by_host',
+      [hostId]
+    );
+
+    // 2. Rating trung bình: Dùng hàm fn_get_host_average_rating
+    const avgRating = await this.databaseService.callFunction(
+      'fn_get_host_average_rating',
+      [hostId]
+    );
+
+    // 3. Doanh thu năm: Hàm fn_CalculateAnnualRevenue tính cho 1 nhà.
+    // -> Ta cần tính tổng doanh thu của tất cả nhà mà Host này sở hữu.
+    // -> Viết Query gọi Function bên trong.
+    const sqlRevenue = `
+      SELECT SUM(fn_CalculateAnnualRevenue(a.Accommodation_ID)) as totalRevenue
+      FROM accommodation a
+      JOIN post p ON a.Accommodation_ID = p.Accommodation_ID
+      WHERE p.Host_ID = ?
+    `;
+    const revenueRes = await this.databaseService.query(sqlRevenue, [hostId]);
+
+    return {
+      totalListings: parseInt(totalListings) || 0,
+      averageRating: parseFloat(avgRating).toFixed(2),
+      annualRevenue: revenueRes[0]?.totalRevenue || 0,
+    };
   }
 }

@@ -1,15 +1,18 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
+  UseGuards,
+  Request,
   Param,
+  Body,
   Post,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { HostService } from './host.service';
 import { CreateHostDto } from './dto/create-host.dto';
 import { UpdateHostDto } from './dto/update-host.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
 @Controller('hosts')
 export class HostController {
@@ -21,20 +24,25 @@ export class HostController {
   // getDashboardStats(@Param('id') hostId: string) {
   //   return this.hostService.getDashboardStats(hostId);
   // }
-
+  @UseGuards(JwtAuthGuard)
+  @Get('dashboard')
+  getDashboardStats(@Request() req) {
+    // req.user.userId lấy từ Token
+    return this.hostService.getDashboardStats(req.user.userId);
+  }
   @Get()
   async findAll() {
     return await this.hostService.findAll();
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.hostService.findOne(id);
-  }
-
   @Post('create')
   async create(@Body() createHostDto: CreateHostDto) {
     return await this.hostService.create(createHostDto);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.hostService.findOne(id);
   }
 
   @Put('update/:id')
