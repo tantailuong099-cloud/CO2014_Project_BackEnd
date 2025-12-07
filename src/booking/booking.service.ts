@@ -1,6 +1,10 @@
 // CO2014_Project_BackEnd\src\booking\booking.service.ts
 
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CompletePaymentDto } from './dto/complete-payment.dto';
@@ -18,7 +22,7 @@ export class BookingService {
     try {
       // CALL returns an array of result sets
       const [resultSets] = await this.db.query(
-        "CALL sp_CreateBooking(?, ?, ?, ?, ?, @totalPrice, @newBookingID);",
+        'CALL sp_CreateBooking(?, ?, ?, ?, ?, @totalPrice, @newBookingID);',
         [
           dto.guestId,
           dto.accommodationId,
@@ -32,14 +36,16 @@ export class BookingService {
       const { bookingId, totalPrice } = resultSets[0];
 
       return {
-        message: "Booking created successfully",
+        message: 'Booking created successfully',
         bookingId,
-        totalPrice
+        totalPrice,
       };
-
     } catch (err) {
-      console.error("Create booking error:", err.sqlMessage || err.message || err);
-      throw new BadRequestException("Unable to create booking");
+      console.error(
+        'Create booking error:',
+        err.sqlMessage || err.message || err
+      );
+      throw new BadRequestException('Unable to create booking');
     }
   }
 
@@ -49,7 +55,7 @@ export class BookingService {
   async completePayment(bookingId: number, dto: CompletePaymentDto) {
     try {
       const [rows] = await this.db.query(
-        "CALL sp_CompleteBookingPayment(?, ?, ?, @paymentID, @paidAmount, @message);",
+        'CALL sp_CompleteBookingPayment(?, ?, ?, @paymentID, @paidAmount, @message);',
         [bookingId, dto.paymentMethod, dto.currency]
       );
 
@@ -64,7 +70,7 @@ export class BookingService {
       };
     } catch (err) {
       console.error('Finish Payment error:', err?.sqlMessage ?? err?.message);
-      throw new BadRequestException("Payment failed");
+      throw new BadRequestException('Payment failed');
     }
   }
 
@@ -74,17 +80,18 @@ export class BookingService {
   async cancel(bookingId: number, dto: CancelBookingDto) {
     try {
       // init OUT param
-      await this.db.query("SET @refundAmount = 0;");
+      await this.db.query('SET @refundAmount = 0;');
 
       // CALL with IN + OUT
-      await this.db.query(
-        "CALL sp_CancelBooking(?, ?, ?, @refundAmount);",
-        [bookingId, dto.guestId, dto.reason],
-      );
+      await this.db.query('CALL sp_CancelBooking(?, ?, ?, @refundAmount);', [
+        bookingId,
+        dto.guestId,
+        dto.reason,
+      ]);
 
       // read OUT
       const rows: any[] = await this.db.query(
-        "SELECT @refundAmount AS refundAmount;",
+        'SELECT @refundAmount AS refundAmount;'
       );
       const refundRow = rows[0];
 
@@ -96,7 +103,7 @@ export class BookingService {
     } catch (err: any) {
       console.error(
         'Cancel booking error:',
-        err?.sqlMessage ?? err?.message ?? err,
+        err?.sqlMessage ?? err?.message ?? err
       );
       throw new BadRequestException('Cancellation failed');
     }
@@ -105,16 +112,45 @@ export class BookingService {
   // -------------------------------------------------------
   // 4. Guest History
   // -------------------------------------------------------
+  // async getGuestHistory(guestId: string) {
+  //   return this.db.query(
+  //     `
+  //     SELECT *
+  //     FROM Booking
+  //     WHERE Guest_ID = ?
+  //     ORDER BY Check_in DESC
+  //     `,
+  //     [guestId]
+  //   );
+  // }
+
   async getGuestHistory(guestId: string) {
-    return this.db.query(
-      `
-      SELECT *
-      FROM Booking
-      WHERE Guest_ID = ?
-      ORDER BY Check_in DESC
-      `,
-      [guestId],
-    );
+    const sql = `
+      SELECT 
+        b.Booking_ID, 
+        b.Status, 
+        b.Total_Price, 
+        b.Check_in, 
+        b.Check_out, 
+        b.Accommodation_ID, 
+        a.Title as Accommodation_Title,
+        '/image/ACC_001.jpg' as Image,
+
+        -- 👇 THÊM DÒNG NÀY: Kiểm tra xem đã có review chưa (Trả về 1 hoặc 0)
+        (SELECT COUNT(*) 
+         FROM reviews r 
+         WHERE r.Guest_ID = b.Guest_ID 
+           AND r.Accommodation_ID = b.Accommodation_ID
+        ) as HasReview
+
+      FROM booking b
+      JOIN accommodation a ON b.Accommodation_ID = a.Accommodation_ID
+      JOIN location l ON a.Location_ID = l.Location_ID
+      WHERE b.Guest_ID = ?
+      ORDER BY b.Created_At DESC
+    `;
+
+    return this.db.query(sql, [guestId]);
   }
 
   async getGuestActiveHistory(guestId: string) {
@@ -126,7 +162,7 @@ export class BookingService {
           AND Status IN ('Pending', 'Confirmed', 'Completed')
         ORDER BY Check_in DESC
       `,
-      [guestId],
+      [guestId]
     );
   }
 
@@ -146,7 +182,7 @@ export class BookingService {
         AND b.Status = 'Pending'
       ORDER BY b.Check_in DESC
       `,
-      [hostId],
+      [hostId]
     );
   }
 
@@ -165,7 +201,7 @@ export class BookingService {
         WHERE p.Host_ID = ?
         ORDER BY b.Created_At DESC
       `,
-      [hostId],
+      [hostId]
     );
   }
 
@@ -179,7 +215,7 @@ export class BookingService {
         FROM booking
         WHERE Booking_ID = ?
       `,
-      [bookingId],
+      [bookingId]
     );
 
     if (!rows.length) {
@@ -192,7 +228,7 @@ export class BookingService {
   async approveBooking(bookingId: number, dto: ApproveBookingDto) {
     try {
       const [rows] = await this.db.query(
-        "CALL sp_ApproveBooking(?, ?, @message);",
+        'CALL sp_ApproveBooking(?, ?, @message);',
         [bookingId, dto.hostId]
       );
 
@@ -203,8 +239,8 @@ export class BookingService {
         message: result.message,
       };
     } catch (err) {
-      console.error("Host approval error:", err?.sqlMessage ?? err?.message);
-      throw new BadRequestException("Host approval failed");
+      console.error('Host approval error:', err?.sqlMessage ?? err?.message);
+      throw new BadRequestException('Host approval failed');
     }
   }
 
@@ -230,5 +266,4 @@ export class BookingService {
     `;
     return this.db.query(sql, [guestId]);
   }
-  
 }
